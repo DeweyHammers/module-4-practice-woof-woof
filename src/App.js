@@ -1,23 +1,69 @@
-import React from 'react';
-import './App.css';
+import React, { Component } from "react";
+import DogBar from "./components/DogBar";
+import Dog from "./components/Dog";
+import "./App.css";
 
-function App() {
-  return (
-    <div className="App">
-      <div id="filter-div">
-        <button id="good-dog-filter">Filter good dogs: OFF</button>
-      </div>
-      <div id="dog-bar">
+class App extends Component {
+  state = {
+    pups: [],
+    showPup: false,
+    filter: "OFF",
+  };
 
-      </div>
-      <div id="dog-summary-container">
-        <h1>DOGGO:</h1>
-        <div id="dog-info">
+  componentDidMount() {
+    fetch("http://localhost:3000/pups")
+      .then((resp) => resp.json())
+      .then((json) => this.setState({ pups: json }));
+  }
 
-        </div>
+  handleShowDog = (id) => {
+    this.setState({
+      showPup: this.state.pups.filter((pup) => pup.id === id)[0],
+    });
+  };
+
+  handleFilter = () => {
+    this.state.filter === "OFF"
+      ? this.setState({ filter: "ON" })
+      : this.setState({ filter: "OFF" });
+  };
+
+  handleUpdateDog = (id, value) => {
+    const boolen = value === "Good Dog!" ? false : true;
+    const newState = this.state.pups.map((pup) => {
+      if (pup.id === id) {
+        pup.isGoodDog = boolen;
+        return pup;
+      } else {
+        return pup;
+      }
+    });
+    this.setState({ pups: newState });
+    fetch(`http://localhost:3000/pups/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isGoodDog: boolen }),
+    });
+  };
+
+  render() {
+    return (
+      <div className="App">
+        <DogBar
+          filter={this.state.filter}
+          pups={this.state.pups}
+          handleShowDog={this.handleShowDog}
+          handleFilter={this.handleFilter}
+        />
+        {this.state.showPup && (
+          <Dog
+            handleUpdateDog={this.handleUpdateDog}
+            pup={this.state.showPup}
+          />
+        )}
       </div>
-    </div>
-  );
+    );
+  }
 }
 
 export default App;
